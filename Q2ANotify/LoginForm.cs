@@ -7,15 +7,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Q2ANotify.Q2AApi;
 
 namespace Q2ANotify
 {
     public partial class LoginForm : Form
     {
-        public Q2ACredentials Credentials { get; private set; }
-        public Q2AApi Api { get; private set; }
+        public Credentials Credentials { get; private set; }
+        public Api Api { get; private set; }
 
-        public LoginForm(Q2ACredentials credentials)
+        public LoginForm(Credentials credentials)
         {
             InitializeComponent();
 
@@ -58,13 +59,13 @@ namespace Q2ANotify
 
         private void _loginButton_Click(object sender, EventArgs e)
         {
-            Credentials = new Q2ACredentials(
+            Credentials = new Credentials(
                 _url.Text,
                 _userName.Text,
                 _password.Text
             );
 
-            Api = new Q2AApi(Credentials);
+            Api = new Api(Credentials);
 
             try
             {

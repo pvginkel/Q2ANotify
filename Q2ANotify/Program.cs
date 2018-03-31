@@ -1,16 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Win32;
+using Q2ANotify.Database;
+using Q2ANotify.Q2AApi;
 
 namespace Q2ANotify
 {
     public static class Program
     {
         public static RegistryKey BaseKey => Registry.CurrentUser.CreateSubKey(@"Software\Q2ANotify");
+        public static string BasePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Q2ANotify");
 
         [STAThread]
         public static void Main()
@@ -20,12 +24,12 @@ namespace Q2ANotify
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            Q2AApi api = null;
+            Api api = null;
 
             var credentials = LoadCredentials();
             if (credentials != null)
             {
-                api = new Q2AApi(credentials);
+                api = new Api(credentials);
 
                 try
                 {
@@ -51,10 +55,13 @@ namespace Q2ANotify
                 SaveCredentials(credentials);
             }
 
-            Application.Run(new MainForm(api));
+            using (var db = new Db(Path.Combine(BasePath, "database.db")))
+            {
+                Application.Run(new MainForm(api, db));
+            }
         }
 
-        private static void SaveCredentials(Q2ACredentials credentials)
+        private static void SaveCredentials(Credentials credentials)
         {
             using (var key = BaseKey)
             {
@@ -64,7 +71,7 @@ namespace Q2ANotify
             }
         }
 
-        private static Q2ACredentials LoadCredentials()
+        private static Credentials LoadCredentials()
         {
             using (var key = BaseKey)
             {
@@ -74,7 +81,7 @@ namespace Q2ANotify
 
                 if (url != null && userName != null && password != null)
                 {
-                    return new Q2ACredentials(
+                    return new Credentials(
                         url,
                         userName,
                         Encryption.Decrypt(password)

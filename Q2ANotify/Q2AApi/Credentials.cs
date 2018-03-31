@@ -4,15 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Q2ANotify
+namespace Q2ANotify.Q2AApi
 {
-    public class Q2ACredentials
+    public class Credentials
     {
         public string Url { get; }
         public string UserName { get; }
         public string Password { get; }
 
-        public Q2ACredentials(string url, string userName, string password)
+        public Credentials(string url, string userName, string password)
         {
             if (url == null)
                 throw new ArgumentNullException(nameof(url));

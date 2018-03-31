@@ -1,22 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
-namespace Q2ANotify
+namespace Q2ANotify.Q2AApi
 {
-    public class Q2AApi
+    public class Api
     {
         private static readonly Regex CodeRe = new Regex(@"<input[^>]*name *= *""code""[^>]*value *= *""([^""]*)""[^>]*>", RegexOptions.IgnoreCase);
+        private const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
-        private readonly Q2ACredentials _credentials;
+        private readonly Credentials _credentials;
         private readonly CookieContainer _cookieContainer = new CookieContainer();
 
-        public Q2AApi(Q2ACredentials credentials)
+        public Api(Credentials credentials)
         {
             if (credentials == null)
                 throw new ArgumentNullException(nameof(credentials));
@@ -41,6 +45,84 @@ namespace Q2ANotify
 
             if (_cookieContainer.GetCookies(new Uri(_credentials.Url))["qa_session"] == null)
                 throw new IOException("Invalid user name or password");
+        }
+
+        public Feed GetFeed(DateTime? since)
+        {
+            string url = "notify-get-updates";
+            if (since.HasValue)
+                url += "?since=" + Uri.EscapeDataString(since.Value.ToString(DateTimeFormat));
+
+            string response = DoRequest(url);
+
+            JObject obj;
+
+            using (var reader = new StringReader(response))
+            using (var json = new JsonTextReader(reader))
+            {
+                json.DateParseHandling = DateParseHandling.None;
+                json.FloatParseHandling = FloatParseHandling.Decimal;
+
+                obj = JObject.Load(json);
+            }
+
+            FeedUser user = null;
+            IList<FeedNotification> notifications = null;
+
+            foreach (var entry in obj)
+            {
+                switch (entry.Key)
+                {
+                    case "user":
+                        user = ParseFeedUser((JObject)entry.Value);
+                        break;
+                    case "feed":
+                        notifications = ParseFeedNotifications((JArray)entry.Value);
+                        break;
+                }
+            }
+
+            return new Feed(user, notifications);
+        }
+
+        private FeedUser ParseFeedUser(JObject obj)
+        {
+            var badges = new List<FeedUserBadge>();
+
+            foreach (var entry in (JObject)obj["badges"])
+            {
+                badges.Add(new FeedUserBadge(
+                    entry.Key,
+                    (int)entry.Value
+                ));
+            }
+
+            return new FeedUser(
+                (string)obj["name"],
+                (int)obj["points"],
+                badges
+            );
+        }
+
+        private IList<FeedNotification> ParseFeedNotifications(JArray array)
+        {
+            var notifications = new List<FeedNotification>();
+
+            foreach (JObject entry in array)
+            {
+                notifications.Add(new FeedNotification(
+                    DateTime.ParseExact((string)entry["datetime"], DateTimeFormat, CultureInfo.InvariantCulture),
+                    (string)entry["kind"],
+                    (string)entry["user"],
+                    (string)entry["poster"],
+                    (string)entry["title"],
+                    (string)entry["message"],
+                    (int?)entry["parentid"],
+                    (int?)entry["postid"]
+                ));
+            }
+
+            return notifications;
         }
 
         private string GetFormCode(string url)
