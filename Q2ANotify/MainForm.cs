@@ -219,6 +219,14 @@ namespace Q2ANotify
             }
 
             _notifications.LoadFeed(feed);
+
+            if (feed.Notifications.Count > 0)
+                ShowNotificationPopup(feed.Notifications[0]);
+        }
+
+        private void ShowNotificationPopup(FeedNotification notification)
+        {
+            _notifyIcon.ShowBalloonTip((int)TimeSpan.FromSeconds(12).TotalMilliseconds, notification.Title, notification.Message, ToolTipIcon.Info);
         }
 
         private void _exitMenuItem_Click(object sender, EventArgs e)
