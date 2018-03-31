@@ -8,6 +8,7 @@ namespace Q2ANotify.Q2AApi
 {
     public class FeedNotification
     {
+        public long? Id { get; set; }
         public DateTime DateTime { get; }
         public string Kind { get; }
         public string User { get; }
@@ -17,13 +18,14 @@ namespace Q2ANotify.Q2AApi
         public int? ParentId { get; }
         public int? PostId { get; }
 
-        public FeedNotification(DateTime dateTime, string kind, string user, string poster, string title, string message, int? parentId, int? postId)
+        public FeedNotification(long? id, DateTime dateTime, string kind, string user, string poster, string title, string message, int? parentId, int? postId)
         {
             if (kind == null)
                 throw new ArgumentNullException(nameof(kind));
             if (title == null)
                 throw new ArgumentNullException(nameof(title));
 
+            Id = id;
             DateTime = dateTime;
             Kind = kind;
             User = user;

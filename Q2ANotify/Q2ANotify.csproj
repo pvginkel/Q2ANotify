@@ -39,6 +39,9 @@
     <ApplicationIcon>mainicon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="GdiPresentation-4, Version=1.2.0.0, Culture=neutral, PublicKeyToken=c842c0b06ab39023, processorArchitecture=MSIL">
+      <HintPath>..\packages\GdiPresentation.1.2.0.0\lib\net40\GdiPresentation-4.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -67,6 +70,16 @@
     <Compile Include="Database\DbUtil.cs" />
     <Compile Include="Database\IDbContext.cs" />
     <Compile Include="Encryption.cs" />
+    <Compile Include="NativeMethods.cs" />
+    <Compile Include="NotificationsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NotificationsForm.Designer.cs">
+      <DependentUpon>NotificationsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NotificationsForm.Rendering.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Q2AApi\Feed.cs" />
     <Compile Include="LoginForm.cs">
       <SubType>Form</SubType>
@@ -87,11 +100,20 @@
     <Compile Include="Q2AApi\FeedNotification.cs" />
     <Compile Include="Q2AApi\FeedUser.cs" />
     <Compile Include="Q2AApi\FeedUserBadge.cs" />
+    <Compile Include="ScaledImage.cs" />
+    <Compile Include="Support\Button.cs" />
+    <Compile Include="Support\Circle.cs" />
+    <Compile Include="Support\NonStretchingBorder.cs" />
+    <Compile Include="Support\ShadowBorder.cs" />
+    <Compile Include="Taskbar.cs" />
     <EmbeddedResource Include="LoginForm.resx">
       <DependentUpon>LoginForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NotificationsForm.resx">
+      <DependentUpon>NotificationsForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -110,6 +132,13 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\icon_dismiss.png" />
+    <None Include="Resources\icon_close.png" />
+    <None Include="Resources\icon_vote.png" />
+    <None Include="Resources\icon_question.png" />
+    <None Include="Resources\icon_comment.png" />
+    <None Include="Resources\icon_badge.png" />
+    <None Include="Resources\icon_answer.png" />
     <EmbeddedResource Include="Database\Migration\001-create-migration.sql" />
     <EmbeddedResource Include="Database\Migration\003-create-notification.sql" />
     <EmbeddedResource Include="Database\Migration\002-create-user.sql" />

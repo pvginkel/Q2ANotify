@@ -47,6 +47,11 @@ namespace Q2ANotify.Q2AApi
                 throw new IOException("Invalid user name or password");
         }
 
+        public string GetPostLink(int postId)
+        {
+            return _credentials.Url.TrimEnd('/') + "/" + postId + "/";
+        }
+
         public Feed GetFeed(DateTime? since)
         {
             string url = "notify-get-updates";
@@ -111,6 +116,7 @@ namespace Q2ANotify.Q2AApi
             foreach (JObject entry in array)
             {
                 notifications.Add(new FeedNotification(
+                    null,
                     DateTime.ParseExact((string)entry["datetime"], DateTimeFormat, CultureInfo.InvariantCulture),
                     (string)entry["kind"],
                     (string)entry["user"],

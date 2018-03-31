@@ -29,7 +29,11 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this._timer = new System.Windows.Forms.Timer(this.components);
+            this._notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
+            this._notifyIconMenu = new System.Windows.Forms.ContextMenu();
+            this._exitMenuItem = new System.Windows.Forms.MenuItem();
             this.SuspendLayout();
             // 
             // _timer
@@ -37,6 +41,24 @@
             this._timer.Enabled = true;
             this._timer.Interval = 60000;
             this._timer.Tick += new System.EventHandler(this._timer_Tick);
+            // 
+            // _notifyIcon
+            // 
+            this._notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("_notifyIcon.Icon")));
+            this._notifyIcon.Text = "Q2A Notifications";
+            this._notifyIcon.Visible = true;
+            this._notifyIcon.Click += new System.EventHandler(this._notifyIcon_Click);
+            // 
+            // _notifyIconMenu
+            // 
+            this._notifyIconMenu.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
+            this._exitMenuItem});
+            // 
+            // _exitMenuItem
+            // 
+            this._exitMenuItem.Index = 0;
+            this._exitMenuItem.Text = "E&xit";
+            this._exitMenuItem.Click += new System.EventHandler(this._exitMenuItem_Click);
             // 
             // MainForm
             // 
@@ -52,5 +74,8 @@
         #endregion
 
         private System.Windows.Forms.Timer _timer;
+        private System.Windows.Forms.NotifyIcon _notifyIcon;
+        private System.Windows.Forms.ContextMenu _notifyIconMenu;
+        private System.Windows.Forms.MenuItem _exitMenuItem;
     }
 }

@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,6 +14,7 @@ namespace Q2ANotify
     {
         private readonly Api _api;
         private readonly Db _db;
+        private NotificationsForm _notifications;
 
         public MainForm(Api api, Db db)
         {
@@ -30,16 +28,91 @@ namespace Q2ANotify
 
             InitializeComponent();
 
+            _notifyIcon.ContextMenu = _notifyIconMenu;
+
+            _notifications = new NotificationsForm(api, db);
+
 #if DEBUG
             // Lower the timer for debug to make it easier to test the API.
             _timer.Interval = 1000;
 #endif
+
+            Disposed += MainForm_Disposed;
+
+            var feed = LoadFeed();
+            if (feed != null)
+                _notifications.LoadFeed(feed);
+
+#if DEBUG
+            Shown += (s, e) => _notifications.Show();
+#endif
         }
 
+        private Feed LoadFeed()
+        {
+            FeedUser user;
+            var notifications = new List<FeedNotification>();
+
+            using (var ctx = _db.OpenContext())
+            {
+                int userId;
+
+                using (var reader = ctx.ExecuteReader("SELECT rowid, name, points, badges_bronze, badges_silver, badges_gold FROM user"))
+                {
+                    if (!reader.Read())
+                        return null;
+
+                    userId = (int)(long)reader["rowid"];
+
+                    user = new FeedUser(
+                        (string)reader["name"],
+                        (int)reader["points"],
+                        new[]
+                        {
+                            new FeedUserBadge("bronze", (int)reader["badges_bronze"]),
+                            new FeedUserBadge("silver", (int)reader["badges_silver"]),
+                            new FeedUserBadge("gold", (int)reader["badges_gold"])
+                        }
+                    );
+                }
+
+                using (var reader = ctx.ExecuteReader(
+                    "SELECT rowid, userid, datetime, kind, user, poster, title, message, parentid, postid FROM notification WHERE userid = @userid ORDER BY datetime DESC",
+                    ("@userid", userId)
+                ))
+                {
+                    while (reader.Read())
+                    {
+                        notifications.Add(new FeedNotification(
+                            (long)reader["rowid"],
+                            DbUtil.ParseDateTime((string)reader["datetime"]),
+                            (string)reader["kind"],
+                            reader["user"] as string,
+                            reader["poster"] as string,
+                            (string)reader["title"],
+                            reader["message"] as string,
+                            reader["parentid"] as int?,
+                            reader["postid"] as int?
+                        ));
+                    }
+                }
+            }
+
+            return new Feed(user, notifications);
+        }
+
+        private void MainForm_Disposed(object sender, EventArgs e)
+        {
+            _notifications.Dispose();
+            _notifications = null;
+        }
+
+#if !DEBUG
         protected override void SetVisibleCore(bool value)
         {
             base.SetVisibleCore(false);
         }
+#endif
 
         private void _timer_Tick(object sender, EventArgs e)
         {
@@ -138,10 +211,24 @@ namespace Q2ANotify
                         ("@parentid", notification.ParentId),
                         ("@postid", notification.PostId)
                     );
+
+                    notification.Id = ctx.LastInsertRowId;
                 }
 
                 ctx.Commit();
             }
+
+            _notifications.LoadFeed(feed);
+        }
+
+        private void _exitMenuItem_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void _notifyIcon_Click(object sender, EventArgs e)
+        {
+            _notifications.Show();
         }
     }
 }

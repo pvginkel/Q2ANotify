@@ -1,6 +1,6 @@
 ﻿CREATE TABLE "notification" (
 	"userid" INT NOT NULL,
-	"datetime" INT NOT NULL,
+	"datetime" TEXT NOT NULL,
 	"kind" TEXT NOT NULL,
 	"user" TEXT NULL,
 	"poster" TEXT NULL,
