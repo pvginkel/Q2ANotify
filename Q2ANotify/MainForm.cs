@@ -26,6 +26,9 @@ namespace Q2ANotify
 
             InitializeComponent();
 
+            _updateTimer.Interval = (int)TimeSpan.FromHours(1).TotalMilliseconds;
+            _updateTimer.Enabled = true;
+
             _notifyIcon.ContextMenu = _notifyIconMenu;
 
             Disposed += MainForm_Disposed;
@@ -39,6 +42,12 @@ namespace Q2ANotify
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            if (StartUpdate())
+            {
+                Dispose();
+                return;
+            }
+
             Api api = null;
 
             var credentials = LoadCredentials();
@@ -60,6 +69,38 @@ namespace Q2ANotify
                 OpenSynchronizer(api);
             else
                 Login();
+        }
+
+        private bool StartUpdate()
+        {
+#if DEBUG
+            return false;
+#else
+            try
+            {
+                const string packageCode = "Q2ANotify";
+
+                bool updateAvailable = NuGetUpdate.Update.IsUpdateAvailable(packageCode);
+                if (updateAvailable)
+                {
+                    MessageBox.Show(
+                        "An update for Q2A Notify is available. Click OK to start the update.",
+                        Text,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+
+                    NuGetUpdate.Update.StartUpdate(packageCode);
+                    return true;
+                }
+            }
+            catch
+            {
+                // Ignore exceptions.
+            }
+
+            return false;
+#endif
         }
 
         private void Login()
@@ -210,6 +251,12 @@ namespace Q2ANotify
             Logout();
 
             CloseSynchronizer();
+        }
+
+        private void _updateTimer_Tick(object sender, EventArgs e)
+        {
+            if (StartUpdate())
+                Dispose();
         }
     }
 }

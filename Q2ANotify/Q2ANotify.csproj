@@ -45,6 +45,9 @@
     <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="NuGetUpdate, Version=0.2.8.0, Culture=neutral, PublicKeyToken=059e64dabad2dc3e, processorArchitecture=MSIL">
+      <HintPath>..\packages\NuGetUpdate.0.2.8\lib\Net20\NuGetUpdate.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.SQLite, Version=1.0.108.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
@@ -147,6 +150,7 @@
     <EmbeddedResource Include="Database\Migration\003-create-notification.sql" />
     <EmbeddedResource Include="Database\Migration\002-create-user.sql" />
     <Content Include="mainicon.ico" />
+    <Content Include="NguScript.xml" />
     <Content Include="Resources\banner.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

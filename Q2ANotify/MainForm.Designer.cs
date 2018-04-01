@@ -38,10 +38,11 @@ namespace Q2ANotify
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this._notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this._notifyIconMenu = new System.Windows.Forms.ContextMenu();
-            this._exitMenuItem = new System.Windows.Forms.MenuItem();
             this._loginMenuItem = new System.Windows.Forms.MenuItem();
             this._logoutMenuItem = new System.Windows.Forms.MenuItem();
             this.menuItem3 = new System.Windows.Forms.MenuItem();
+            this._exitMenuItem = new System.Windows.Forms.MenuItem();
+            this._updateTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // _notifyIcon
@@ -61,12 +62,6 @@ namespace Q2ANotify
             this._exitMenuItem});
             this._notifyIconMenu.Popup += new System.EventHandler(this._notifyIconMenu_Popup);
             // 
-            // _exitMenuItem
-            // 
-            this._exitMenuItem.Index = 3;
-            this._exitMenuItem.Text = "E&xit";
-            this._exitMenuItem.Click += new System.EventHandler(this._exitMenuItem_Click);
-            // 
             // _loginMenuItem
             // 
             this._loginMenuItem.Index = 0;
@@ -83,6 +78,16 @@ namespace Q2ANotify
             // 
             this.menuItem3.Index = 2;
             this.menuItem3.Text = "-";
+            // 
+            // _exitMenuItem
+            // 
+            this._exitMenuItem.Index = 3;
+            this._exitMenuItem.Text = "E&xit";
+            this._exitMenuItem.Click += new System.EventHandler(this._exitMenuItem_Click);
+            // 
+            // _updateTimer
+            // 
+            this._updateTimer.Tick += new System.EventHandler(this._updateTimer_Tick);
             // 
             // MainForm
             // 
@@ -102,5 +107,6 @@ namespace Q2ANotify
         private MenuItem _loginMenuItem;
         private MenuItem _logoutMenuItem;
         private MenuItem menuItem3;
+        private Timer _updateTimer;
     }
 }
