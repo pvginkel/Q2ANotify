@@ -36,3 +36,7 @@ able to send notifications of earned badges. A PR has been made available to
 
 The plugin won't break if another version of q2a-badges is installed. The only difference is
 that you won't receive notifications of earned badges. The badge count will still be shown.
+
+## Thanks
+
+The images shown with the notifications are taken from the [Noun Project](https://thenounproject.com/).
