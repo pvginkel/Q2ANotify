@@ -16,6 +16,7 @@ namespace Q2ANotify
         private Synchronizer _synchronizer;
         private NotificationsForm _notifications;
         private FeedNotification _lastNotificationNotified;
+        private bool _loaded;
 
         public MainForm(Db db)
         {
@@ -33,14 +34,12 @@ namespace Q2ANotify
 
             Disposed += MainForm_Disposed;
 
-            Load += MainForm_Load;
+            HandleCreated += MainForm_HandleCreated;
 
-#if DEBUG
-            Shown += (s, e) => _notifications?.Show();
-#endif
+            var handle = Handle;
         }
 
-        private void MainForm_Load(object sender, EventArgs e)
+        private void MainForm_HandleCreated(object sender, EventArgs e)
         {
             if (StartUpdate())
             {
@@ -69,6 +68,12 @@ namespace Q2ANotify
                 OpenSynchronizer(api);
             else
                 Login();
+
+#if DEBUG
+            _notifications?.Show();
+#endif
+
+            _loaded = true;
         }
 
         private bool StartUpdate()
@@ -157,12 +162,10 @@ namespace Q2ANotify
             }
         }
 
-#if !DEBUG
         protected override void SetVisibleCore(bool value)
         {
             base.SetVisibleCore(false);
         }
-#endif
 
         private void ShowNotificationPopup(FeedNotification notification)
         {
@@ -237,8 +240,18 @@ namespace Q2ANotify
 
         private void _notifyIconMenu_Popup(object sender, EventArgs e)
         {
-            _loginMenuItem.Visible = _synchronizer == null;
-            _logoutMenuItem.Visible = _synchronizer != null;
+            if (_loaded)
+            {
+                _loginMenuItem.Visible = _synchronizer == null;
+            }
+            else
+            {
+                _loginMenuItem.Visible = true;
+                _loginMenuItem.Enabled = false;
+
+            }
+
+            _logoutMenuItem.Visible = !_loginMenuItem.Visible;
         }
 
         private void _loginMenuItem_Click(object sender, EventArgs e)

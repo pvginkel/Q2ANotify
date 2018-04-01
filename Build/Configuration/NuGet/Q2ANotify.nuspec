@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Q2ANotify</id>
+    <version>$version$</version>
+    <authors>Pieter van Ginkel</authors>
+    <description>Notification application for Question2Answer.</description>
+    <projectUrl>http://github.com/pvginkel/Q2ANotify</projectUrl>
+  </metadata>
+  <files>
+    <file src="..\Q2ANotify\bin\Release\**" target="Tools" exclude="..\Q2ANotify\bin\Release\**.pdb;..\Q2ANotify\bin\Release\**.xml" />
+    <file src="..\Q2ANotify\NguScript.xml" target="Tools" />
+    <file src="..\packages\NuGetUpdate.*\Tools\Installer\ngu.exe" target="Tools" />
+  </files>
+</package>
