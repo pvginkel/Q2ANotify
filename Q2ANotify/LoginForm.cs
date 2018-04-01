@@ -73,11 +73,21 @@ namespace Q2ANotify
 
                 DialogResult = DialogResult.OK;
             }
+            catch (ApiException)
+            {
+                MessageBox.Show(
+                    this,
+                    "Invalid user name or password",
+                    Text,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
             catch (Exception ex)
             {
                 MessageBox.Show(
                     this,
-                    "Invalid user name or password:" + Environment.NewLine + Environment.NewLine + ex.Message,
+                    "Cannot logon:" + Environment.NewLine + Environment.NewLine + ex.Message,
                     Text,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error

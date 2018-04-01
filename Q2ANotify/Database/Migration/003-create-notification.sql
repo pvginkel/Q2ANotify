@@ -1,5 +1,4 @@
 ﻿CREATE TABLE "notification" (
-	"userid" INT NOT NULL,
 	"datetime" TEXT NOT NULL,
 	"kind" TEXT NOT NULL,
 	"user" TEXT NULL,
@@ -10,4 +9,4 @@
 	"postid" INT NULL
 );
 
-CREATE INDEX "idx_notification_userid_datetime" ON "notification" ("userid", "datetime");
+CREATE INDEX "idx_notification_datetime" ON "notification" ("datetime");

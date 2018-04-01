@@ -18,8 +18,6 @@ namespace Q2ANotify.Q2AApi
                 throw new ArgumentNullException(nameof(url));
             if (userName == null)
                 throw new ArgumentNullException(nameof(userName));
-            if (password == null)
-                throw new ArgumentNullException(nameof(password));
 
             Url = url;
             UserName = userName;

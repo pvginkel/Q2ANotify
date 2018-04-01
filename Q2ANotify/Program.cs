@@ -24,72 +24,10 @@ namespace Q2ANotify
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            Api api = null;
-
-            var credentials = LoadCredentials();
-            if (credentials != null)
-            {
-                api = new Api(credentials);
-
-                try
-                {
-                    api.Authenticate();
-                }
-                catch
-                {
-                    api = null;
-                }
-            }
-
-            if (api == null)
-            {
-                using (var form = new LoginForm(credentials))
-                {
-                    if (form.ShowDialog() != DialogResult.OK)
-                        return;
-
-                    credentials = form.Credentials;
-                    api = form.Api;
-                }
-
-                SaveCredentials(credentials);
-            }
-
             using (var db = new Db(Path.Combine(BasePath, "database.db")))
             {
-                Application.Run(new MainForm(api, db));
+                Application.Run(new MainForm(db));
             }
-        }
-
-        private static void SaveCredentials(Credentials credentials)
-        {
-            using (var key = BaseKey)
-            {
-                key.SetValue("URL", credentials.Url);
-                key.SetValue("User name", credentials.UserName);
-                key.SetValue("Password", Encryption.Encrypt(credentials.Password));
-            }
-        }
-
-        private static Credentials LoadCredentials()
-        {
-            using (var key = BaseKey)
-            {
-                string url = key.GetValue("URL") as string;
-                string userName = key.GetValue("User name") as string;
-                string password = key.GetValue("Password") as string;
-
-                if (url != null && userName != null && password != null)
-                {
-                    return new Credentials(
-                        url,
-                        userName,
-                        Encryption.Decrypt(password)
-                    );
-                }
-            }
-
-            return null;
         }
     }
 }

@@ -44,7 +44,7 @@ namespace Q2ANotify.Q2AApi
             DoRequest("login?to=/", post);
 
             if (_cookieContainer.GetCookies(new Uri(_credentials.Url))["qa_session"] == null)
-                throw new IOException("Invalid user name or password");
+                throw new ApiException("Invalid user name or password");
         }
 
         public string GetPostLink(int postId)

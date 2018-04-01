@@ -15,21 +15,17 @@ namespace Q2ANotify
     {
         private const int FormMargin = 10;
 
-        private readonly Api _api;
-        private readonly Db _db;
+        private readonly Synchronizer _synchronizer;
         private FeedUser _user;
         private readonly List<FeedNotification> _notifications = new List<FeedNotification>();
         private readonly int _dpi;
 
-        public NotificationsForm(Api api, Db db)
+        public NotificationsForm(Synchronizer synchronizer)
         {
-            if (api == null)
-                throw new ArgumentNullException(nameof(api));
-            if (db == null)
-                throw new ArgumentNullException(nameof(db));
+            if (synchronizer == null)
+                throw new ArgumentNullException(nameof(synchronizer));
 
-            _api = api;
-            _db = db;
+            _synchronizer = synchronizer;
 
             InitializeComponent();
 
@@ -44,21 +40,24 @@ namespace Q2ANotify
             _elementControl.MinimumSize = new Size(Scale(350), 0);
 
             Deactivate += (s, e) => Visible = false;
+
+            var feed = synchronizer.LoadFeedFromDatabase();
+            if (feed != null)
+                LoadFeed(feed);
+
+            synchronizer.FeedUpdated += (s, e) => LoadFeed(e.Feed);
         }
 
         protected override void SetVisibleCore(bool value)
         {
-            if (value)
+            if (value && _user != null)
                 _elementControl.Content = BuildContent();
 
             base.SetVisibleCore(value);
         }
 
-        public void LoadFeed(Feed feed)
+        private void LoadFeed(Feed feed)
         {
-            if (feed == null)
-                throw new ArgumentNullException(nameof(feed));
-
             _user = feed.User;
             _notifications.InsertRange(0, feed.Notifications);
 
@@ -112,25 +111,9 @@ namespace Q2ANotify
             }
         }
 
-        private void OpenPost(int postId)
-        {
-            try
-            {
-                Process.Start(_api.GetPostLink(postId));
-            }
-            catch
-            {
-                // Ignore exceptions. This call may fail, e.g. when Firefox needs to update.
-            }
-        }
-
         private void CloseNotification(long id)
         {
-            using (var ctx = _db.OpenContext())
-            {
-                ctx.ExecuteNonQuery("DELETE FROM notification WHERE rowid = @id", ("@id", id));
-                ctx.Commit();
-            }
+            _synchronizer.DeleteNotification(id);
 
             _notifications.RemoveAll(p => p.Id == id);
 
@@ -139,11 +122,7 @@ namespace Q2ANotify
 
         private void DismissAll()
         {
-            using (var ctx = _db.OpenContext())
-            {
-                ctx.ExecuteNonQuery("DELETE FROM notification");
-                ctx.Commit();
-            }
+            _synchronizer.DeleteAllNotifications();
 
             _notifications.Clear();
 

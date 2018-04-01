@@ -222,7 +222,7 @@ namespace Q2ANotify
                 {
                     content.Cursor = GdiPresentation.Cursor.Hand;
                     content.Background = SolidBrush.Transparent;
-                    content.MouseUp += (s, e) => OpenPost(notification.ParentId.Value);
+                    content.MouseUp += (s, e) => _synchronizer.OpenPost(notification.ParentId.Value);
                 }
 
                 var shadowColor = Color.LightGray;

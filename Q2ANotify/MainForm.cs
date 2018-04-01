@@ -12,100 +12,108 @@ namespace Q2ANotify
 {
     public partial class MainForm : Form
     {
-        private readonly Api _api;
         private readonly Db _db;
+        private Synchronizer _synchronizer;
         private NotificationsForm _notifications;
         private FeedNotification _lastNotificationNotified;
 
-        public MainForm(Api api, Db db)
+        public MainForm(Db db)
         {
-            if (api == null)
-                throw new ArgumentNullException(nameof(api));
             if (db == null)
                 throw new ArgumentNullException(nameof(db));
 
-            _api = api;
             _db = db;
 
             InitializeComponent();
 
             _notifyIcon.ContextMenu = _notifyIconMenu;
 
-            _notifications = new NotificationsForm(api, db);
-
-#if DEBUG
-            // Lower the timer for debug to make it easier to test the API.
-            _timer.Interval = 1000;
-#endif
-
             Disposed += MainForm_Disposed;
 
-            var feed = LoadFeed();
-            if (feed != null)
-                _notifications.LoadFeed(feed);
+            Load += MainForm_Load;
 
 #if DEBUG
-            Shown += (s, e) => _notifications.Show();
+            Shown += (s, e) => _notifications?.Show();
 #endif
         }
 
-        private Feed LoadFeed()
+        private void MainForm_Load(object sender, EventArgs e)
         {
-            FeedUser user;
-            var notifications = new List<FeedNotification>();
+            Api api = null;
 
-            using (var ctx = _db.OpenContext())
+            var credentials = LoadCredentials();
+            if (credentials?.Password != null)
             {
-                int userId;
+                api = new Api(credentials);
 
-                using (var reader = ctx.ExecuteReader("SELECT rowid, name, points, badges_bronze, badges_silver, badges_gold FROM user"))
+                try
                 {
-                    if (!reader.Read())
-                        return null;
-
-                    userId = (int)(long)reader["rowid"];
-
-                    user = new FeedUser(
-                        (string)reader["name"],
-                        (int)reader["points"],
-                        new[]
-                        {
-                            new FeedUserBadge("bronze", (int)reader["badges_bronze"]),
-                            new FeedUserBadge("silver", (int)reader["badges_silver"]),
-                            new FeedUserBadge("gold", (int)reader["badges_gold"])
-                        }
-                    );
+                    api.Authenticate();
                 }
-
-                using (var reader = ctx.ExecuteReader(
-                    "SELECT rowid, userid, datetime, kind, user, poster, title, message, parentid, postid FROM notification WHERE userid = @userid ORDER BY datetime DESC",
-                    ("@userid", userId)
-                ))
+                catch
                 {
-                    while (reader.Read())
-                    {
-                        notifications.Add(new FeedNotification(
-                            (long)reader["rowid"],
-                            DbUtil.ParseDateTime((string)reader["datetime"]),
-                            (string)reader["kind"],
-                            reader["user"] as string,
-                            reader["poster"] as string,
-                            (string)reader["title"],
-                            reader["message"] as string,
-                            reader["parentid"] as int?,
-                            reader["postid"] as int?
-                        ));
-                    }
+                    api = null;
                 }
             }
 
-            return new Feed(user, notifications);
+            if (api != null)
+                OpenSynchronizer(api);
+            else
+                Login();
+        }
+
+        private void Login()
+        {
+            var credentials = LoadCredentials();
+            Api api;
+
+            using (var form = new LoginForm(credentials))
+            {
+                if (form.ShowDialog() != DialogResult.OK)
+                    return;
+
+                credentials = form.Credentials;
+                api = form.Api;
+            }
+
+            SaveCredentials(credentials);
+
+            OpenSynchronizer(api);
         }
 
         private void MainForm_Disposed(object sender, EventArgs e)
         {
-            _notifications.Dispose();
-            _notifications = null;
+            CloseSynchronizer();
+        }
+
+        private void OpenSynchronizer(Api api)
+        {
+            _synchronizer = new Synchronizer(api, _db);
+
+            _synchronizer.FeedUpdated += _synchronizer_FeedUpdated;
+
+            _notifications = new NotificationsForm(_synchronizer);
+        }
+
+        private void _synchronizer_FeedUpdated(object sender, FeedEventArgs e)
+        {
+            if (e.Feed.Notifications.Count > 0)
+                ShowNotificationPopup(e.Feed.Notifications[0]);
+        }
+
+        private void CloseSynchronizer()
+        {
+            if (_notifications != null)
+            {
+                _notifications.Dispose();
+                _notifications = null;
+            }
+
+            if (_synchronizer != null)
+            {
+                _synchronizer.Dispose();
+                _synchronizer = null;
+            }
         }
 
 #if !DEBUG
@@ -114,116 +122,6 @@ namespace Q2ANotify
             base.SetVisibleCore(false);
         }
 #endif
-
-        private void _timer_Tick(object sender, EventArgs e)
-        {
-            GetFeed();
-        }
-
-        private void GetFeed()
-        {
-            try
-            {
-                DoGetFeed();
-            }
-            catch (Exception ex)
-            {
-                Trace.TraceWarning("Failed to get feed: {0}", ex.Message);
-            }
-        }
-
-        private void DoGetFeed()
-        {
-            DateTime? lastNotification = null;
-            int? userId = null;
-
-            using (var ctx = _db.OpenContext())
-            {
-                using (var reader = ctx.ExecuteReader("SELECT rowid, last_notification FROM user"))
-                {
-                    if (reader.Read())
-                    {
-                        userId = reader.GetInt32(0);
-                        lastNotification = DbUtil.ParseDateTime(reader.GetString(1));
-                    }
-                }
-
-                ctx.Commit();
-            }
-
-            var feed = _api.GetFeed(lastNotification);
-
-            using (var ctx = _db.OpenContext())
-            {
-                string name = feed.User.Name;
-                int points = feed.User.Points;
-                int badgesBronze = 0;
-                int badgesSilver = 0;
-                int badgesGold = 0;
-                lastNotification = feed.Notifications.Select(p => (DateTime?)p.DateTime).Max() ?? lastNotification;
-
-                foreach (var badge in feed.User.Badges)
-                {
-                    switch (badge.Type)
-                    {
-                        case "bronze":
-                            badgesBronze = badge.Count;
-                            break;
-                        case "silver":
-                            badgesSilver = badge.Count;
-                            break;
-                        case "gold":
-                            badgesGold = badge.Count;
-                            break;
-                    }
-                }
-
-                string sql;
-                if (userId.HasValue)
-                    sql = "UPDATE user SET name = @name, points = @points, badges_bronze = @badges_bronze, badges_silver = @badges_silver, badges_gold = @badges_gold, last_notification = @last_notification WHERE rowid = @id";
-                else
-                    sql = "INSERT INTO user (name, points, badges_bronze, badges_silver, badges_gold, last_notification) VALUES (@name, @points, @badges_bronze, @badges_silver, @badges_gold, @last_notification)";
-
-                ctx.ExecuteNonQuery(
-                    sql,
-                    ("@name", name),
-                    ("@points", points),
-                    ("@badges_bronze", badgesBronze),
-                    ("@badges_silver", badgesSilver),
-                    ("@badges_gold", badgesGold),
-                    ("@last_notification", DbUtil.PrintDateTimeOpt(lastNotification)),
-                    ("@id", userId)
-                );
-
-                if (!userId.HasValue)
-                    userId = (int)ctx.LastInsertRowId;
-
-                foreach (var notification in feed.Notifications)
-                {
-                    ctx.ExecuteNonQuery(
-                        "INSERT INTO notification (userid, datetime, kind, user, poster, title, message, parentid, postid) VALUES (@userid, @datetime, @kind, @user, @poster, @title, @message, @parentid, @postid)",
-                        ("@userid", userId.Value),
-                        ("@datetime", DbUtil.PrintDateTime(notification.DateTime)),
-                        ("@kind", notification.Kind),
-                        ("@user", notification.User),
-                        ("@poster", notification.Poster),
-                        ("@title", notification.Title),
-                        ("@message", notification.Message),
-                        ("@parentid", notification.ParentId),
-                        ("@postid", notification.PostId)
-                    );
-
-                    notification.Id = ctx.LastInsertRowId;
-                }
-
-                ctx.Commit();
-            }
-
-            _notifications.LoadFeed(feed);
-
-            if (feed.Notifications.Count > 0)
-                ShowNotificationPopup(feed.Notifications[0]);
-        }
 
         private void ShowNotificationPopup(FeedNotification notification)
         {
@@ -247,23 +145,71 @@ namespace Q2ANotify
 
         private void _notifyIcon_Click(object sender, EventArgs e)
         {
-            _notifications.Show();
+            _notifications?.Show();
         }
 
         private void _notifyIcon_BalloonTipClicked(object sender, EventArgs e)
         {
             int? postId = _lastNotificationNotified?.ParentId;
-            if (!postId.HasValue)
-                return;
+            if (postId.HasValue)
+                _synchronizer?.OpenPost(postId.Value);
+        }
 
-            try
+        private Credentials LoadCredentials()
+        {
+            using (var key = Program.BaseKey)
             {
-                Process.Start(_api.GetPostLink(postId.Value));
+                string url = key.GetValue("URL") as string;
+                string userName = key.GetValue("User name") as string;
+                string password = key.GetValue("Password") as string;
+
+                if (url != null && userName != null)
+                {
+                    return new Credentials(
+                        url,
+                        userName,
+                        password == null ? null : Encryption.Decrypt(password)
+                    );
+                }
             }
-            catch
+
+            return null;
+        }
+
+        private void SaveCredentials(Credentials credentials)
+        {
+            using (var key = Program.BaseKey)
             {
-                // Ignore exceptions. This call may fail, e.g. when Firefox needs to update.
+                key.SetValue("URL", credentials.Url);
+                key.SetValue("User name", credentials.UserName);
+                key.SetValue("Password", Encryption.Encrypt(credentials.Password));
             }
+        }
+
+        private void Logout()
+        {
+            using (var key = Program.BaseKey)
+            {
+                key.DeleteValue("Password", false);
+            }
+        }
+
+        private void _notifyIconMenu_Popup(object sender, EventArgs e)
+        {
+            _loginMenuItem.Visible = _synchronizer == null;
+            _logoutMenuItem.Visible = _synchronizer != null;
+        }
+
+        private void _loginMenuItem_Click(object sender, EventArgs e)
+        {
+            Login();
+        }
+
+        private void _logoutMenuItem_Click(object sender, EventArgs e)
+        {
+            Logout();
+
+            CloseSynchronizer();
         }
     }
 }
