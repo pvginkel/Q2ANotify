@@ -132,6 +132,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\icon_more.png" />
     <None Include="Resources\icon_dismiss.png" />
     <None Include="Resources\icon_close.png" />
     <None Include="Resources\icon_vote.png" />

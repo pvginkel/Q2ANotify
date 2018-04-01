@@ -15,6 +15,7 @@ namespace Q2ANotify
         private readonly Api _api;
         private readonly Db _db;
         private NotificationsForm _notifications;
+        private FeedNotification _lastNotificationNotified;
 
         public MainForm(Api api, Db db)
         {
@@ -226,7 +227,17 @@ namespace Q2ANotify
 
         private void ShowNotificationPopup(FeedNotification notification)
         {
-            _notifyIcon.ShowBalloonTip((int)TimeSpan.FromSeconds(12).TotalMilliseconds, notification.Title, notification.Message, ToolTipIcon.Info);
+            string title = notification.Title;
+            string text = notification.Message;
+            _lastNotificationNotified = notification;
+
+            if (String.IsNullOrEmpty(text))
+            {
+                text = title;
+                title = Text;
+            }
+
+            _notifyIcon.ShowBalloonTip((int)TimeSpan.FromSeconds(12).TotalMilliseconds, text, title, ToolTipIcon.Info);
         }
 
         private void _exitMenuItem_Click(object sender, EventArgs e)
@@ -237,6 +248,22 @@ namespace Q2ANotify
         private void _notifyIcon_Click(object sender, EventArgs e)
         {
             _notifications.Show();
+        }
+
+        private void _notifyIcon_BalloonTipClicked(object sender, EventArgs e)
+        {
+            int? postId = _lastNotificationNotified?.ParentId;
+            if (!postId.HasValue)
+                return;
+
+            try
+            {
+                Process.Start(_api.GetPostLink(postId.Value));
+            }
+            catch
+            {
+                // Ignore exceptions. This call may fail, e.g. when Firefox needs to update.
+            }
         }
     }
 }

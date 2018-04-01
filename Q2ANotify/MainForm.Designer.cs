@@ -47,6 +47,7 @@
             this._notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("_notifyIcon.Icon")));
             this._notifyIcon.Text = "Q2A Notifications";
             this._notifyIcon.Visible = true;
+            this._notifyIcon.BalloonTipClicked += new System.EventHandler(this._notifyIcon_BalloonTipClicked);
             this._notifyIcon.Click += new System.EventHandler(this._notifyIcon_Click);
             // 
             // _notifyIconMenu
@@ -66,7 +67,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Name = "MainForm";
-            this.Text = "MainForm";
+            this.Text = "Q2A Notify";
             this.ResumeLayout(false);
 
         }

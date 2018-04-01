@@ -38,9 +38,9 @@ namespace Q2ANotify.Support
                 e.Bounds.Height - 1
             );
 
-            for (int i = 0; i < BorderWidth; i++)
+            for (int i = 1; i <= BorderWidth; i++)
             {
-                double offset = BorderWidth > 1 ? (double)i / (BorderWidth - 1) : 0;
+                double offset = (double)i / BorderWidth;
                 var color = InterpolateBorderColor(offset);
 
                 using (var pen = new System.Drawing.Pen(color, 1))

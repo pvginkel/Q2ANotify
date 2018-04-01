@@ -34,13 +34,11 @@
             // _elementControl
             // 
             this._elementControl.AutoSize = true;
-            this._elementControl.BackColor = System.Drawing.SystemColors.Control;
             this._elementControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this._elementControl.Location = new System.Drawing.Point(0, 0);
-            this._elementControl.MinimumSize = new System.Drawing.Size(443, 0);
             this._elementControl.Name = "_elementControl";
             this._elementControl.ResizeTarget = null;
-            this._elementControl.Size = new System.Drawing.Size(443, 0);
+            this._elementControl.Size = new System.Drawing.Size(0, 0);
             this._elementControl.TabIndex = 0;
             // 
             // NotificationsForm
@@ -49,7 +47,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.BackColor = System.Drawing.Color.Blue;
             this.ClientSize = new System.Drawing.Size(434, 497);
             this.Controls.Add(this._elementControl);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -58,6 +55,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "NotificationsForm";
             this.TopMost = true;
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.NotificationsForm_FormClosing);
             this.VisibleChanged += new System.EventHandler(this.NotificationsForm_VisibleChanged);
             this.ResumeLayout(false);
             this.PerformLayout();

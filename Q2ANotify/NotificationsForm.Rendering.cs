@@ -22,6 +22,7 @@ namespace Q2ANotify
         private static readonly ScaledImage IconVote = new ScaledImage(Resources.icon_vote, IconSize);
         private static readonly ScaledImage IconClose = new ScaledImage(Resources.icon_close, new System.Drawing.Size(7, 7));
         private static readonly ScaledImage IconDismiss = new ScaledImage(Resources.icon_dismiss, new System.Drawing.Size(16, 16));
+        private static readonly ScaledImage IconMore = new ScaledImage(Resources.icon_more, new System.Drawing.Size(16, 4));
 
         private Element BuildContent()
         {
@@ -37,10 +38,10 @@ namespace Q2ANotify
 
             return new Border
             {
-                BorderThickness = new Thickness(ScaleX(1), ScaleY(1)),
+                BorderThickness = new Thickness(Scale(1)),
                 BorderBrush = Brush.Gray,
                 Background = new SolidBrush((Color)System.Drawing.SystemColors.Control),
-                Padding = new Thickness(ScaleX(10), ScaleY(10)),
+                Padding = new Thickness(Scale(10)),
                 Content = content
             };
         }
@@ -55,7 +56,7 @@ namespace Q2ANotify
             var userPoints = new TextBlock(_user.Points.ToString())
             {
                 FontStyle = FontStyle.Bold,
-                Margin = new Thickness(ScaleX(7), 0)
+                Margin = new Thickness(Scale(7), 0)
             };
 
             var userBadges = new StackPanel
@@ -85,20 +86,20 @@ namespace Q2ANotify
                 userBadges.Children.Add(new Circle
                 {
                     Brush = new SolidBrush(color),
-                    Height = ScaleY(10),
-                    Width = ScaleX(10),
+                    Height = Scale(10),
+                    Width = Scale(10),
                     VerticalAlignment = VerticalAlignment.Middle,
-                    Margin = new Thickness(ScaleX(4), 0)
+                    Margin = new Thickness(Scale(4), 0)
                 });
                 userBadges.Children.Add(new TextBlock(badge.Count.ToString()));
             }
 
             var dismiss = new Button
             {
-                Margin = new Thickness(ScaleX(7), 0, 0, 0),
+                Margin = new Thickness(Scale(7), 0, 0, 0),
                 Content = new Image
                 {
-                    Bitmap = IconDismiss.GetScaled(_dpiX, _dpiY)
+                    Bitmap = IconDismiss.GetScaled(_dpi)
                 }
             };
 
@@ -143,7 +144,7 @@ namespace Q2ANotify
             var container = new StackPanel
             {
                 Orientation = Orientation.Vertical,
-                Margin = new Thickness(0, ScaleY(6), 0, 0)
+                Margin = new Thickness(0, Scale(6), 0, 0)
             };
 
             for (var i = 0; i < Math.Min(_notifications.Count, MaxNotifications); i++)
@@ -151,12 +152,13 @@ namespace Q2ANotify
                 var notification = _notifications[i];
                 var image = new Border
                 {
-                    BorderThickness = new Thickness(0, 0, ScaleX(1), 0),
+                    BorderThickness = new Thickness(0, 0, Scale(1), 0),
                     BorderBrush = SolidBrush.LightGray,
                     Content = new Image
                     {
                         Bitmap = GetImage(notification.Kind),
-                        Stretch = Stretch.Fill,
+                        Stretch = Stretch.UniformToFill,
+                        VerticalAlignment = VerticalAlignment.Top,
                         Margin = new Thickness(6)
                     }
                 };
@@ -164,12 +166,23 @@ namespace Q2ANotify
                 var text = new StackPanel
                 {
                     Orientation = Orientation.Vertical,
-                    Margin = new Thickness(ScaleX(6), ScaleY(4)),
+                    Margin = new Thickness(Scale(6), Scale(4)),
                     Children =
                     {
                         new TextBlock(notification.Title)
                     }
                 };
+
+                if (notification.Message != null)
+                    text.Children.Add(new TextBlock(notification.Message));
+
+                if (notification.Poster != null)
+                {
+                    text.Children.Add(new TextBlock($"By {notification.Poster}")
+                    {
+                        ForeColor = Color.Gray
+                    });
+                }
 
                 var close = new Button
                 {
@@ -178,13 +191,10 @@ namespace Q2ANotify
                     Cursor = GdiPresentation.Cursor.Default,
                     Content = new Image
                     {
-                        Margin = new Thickness(ScaleX(4), ScaleY(4)),
-                        Bitmap = IconClose.GetScaled(_dpiX, _dpiY)
+                        Margin = new Thickness(Scale(4)),
+                        Bitmap = IconClose.GetScaled(_dpi)
                     }
                 };
-
-                if (notification.Message != null)
-                    text.Children.Add(new TextBlock(notification.Message));
 
                 Grid.SetColumn(text, 1);
                 Grid.SetColumn(close, 1);
@@ -215,12 +225,14 @@ namespace Q2ANotify
                     content.MouseUp += (s, e) => OpenPost(notification.ParentId.Value);
                 }
 
+                var shadowColor = Color.LightGray;
+
                 var notificationElement = new ShadowBorder
                 {
-                    Margin = new Thickness(0, ScaleY(2)),
-                    BorderStartColor = Color.Transparent,
-                    BorderEndColor = Color.LightGray,
-                    BorderWidth = Scale(4),
+                    Margin = new Thickness(0, Scale(2)),
+                    BorderStartColor = new Color(0, shadowColor.R, shadowColor.G, shadowColor.B),
+                    BorderEndColor = shadowColor,
+                    BorderWidth = Scale(2),
                     Content = new Border
                     {
                         Background = Brush.White,
@@ -234,6 +246,16 @@ namespace Q2ANotify
                 container.Children.Add(notificationElement);
             }
 
+            if (_notifications.Count > MaxNotifications)
+            {
+                container.Children.Add(new Image
+                {
+                    Bitmap = IconMore.GetScaled(_dpi),
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    Margin = new Thickness(Scale(4), 0)
+                });
+            }
+
             return container;
         }
 
@@ -242,15 +264,15 @@ namespace Q2ANotify
             switch (kind)
             {
                 case "q_post":
-                    return IconQuestion.GetScaled(_dpiX, _dpiY);
+                    return IconQuestion.GetScaled(_dpi);
                 case "a_post":
-                    return IconAnswer.GetScaled(_dpiX, _dpiY);
+                    return IconAnswer.GetScaled(_dpi);
                 case "c_post":
-                    return IconComment.GetScaled(_dpiX, _dpiY);
+                    return IconComment.GetScaled(_dpi);
                 case "badge_awarded":
-                    return IconBadge.GetScaled(_dpiX, _dpiY);
+                    return IconBadge.GetScaled(_dpi);
                 case "a_select":
-                    return IconVote.GetScaled(_dpiX, _dpiY);
+                    return IconVote.GetScaled(_dpi);
                 default:
                     return null;
             }
@@ -258,17 +280,7 @@ namespace Q2ANotify
 
         private int Scale(int value)
         {
-            return ScaleX(value);
-        }
-
-        private int ScaleX(int x)
-        {
-            return (int)Math.Ceiling((_dpiX / 96) * x);
-        }
-
-        private int ScaleY(int y)
-        {
-            return (int)Math.Ceiling((_dpiY / 96) * y);
+            return value * _dpi / 96;
         }
     }
 }

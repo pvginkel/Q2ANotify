@@ -19,8 +19,7 @@ namespace Q2ANotify
         private readonly Db _db;
         private FeedUser _user;
         private readonly List<FeedNotification> _notifications = new List<FeedNotification>();
-        private readonly float _dpiX;
-        private readonly float _dpiY;
+        private readonly int _dpi;
 
         public NotificationsForm(Api api, Db db)
         {
@@ -36,13 +35,23 @@ namespace Q2ANotify
 
             using (var g = CreateGraphics())
             {
-                _dpiX = g.DpiX;
-                _dpiY = g.DpiY;
+                _dpi = (int)g.DpiX;
             }
 
-            Deactivate += (s, e) => Visible = false;
-
             Font = SystemFonts.MessageBoxFont;
+
+            _elementControl.MaximumSize = new Size(Scale(350), int.MaxValue);
+            _elementControl.MinimumSize = new Size(Scale(350), 0);
+
+            Deactivate += (s, e) => Visible = false;
+        }
+
+        protected override void SetVisibleCore(bool value)
+        {
+            if (value)
+                _elementControl.Content = BuildContent();
+
+            base.SetVisibleCore(value);
         }
 
         public void LoadFeed(Feed feed)
@@ -53,7 +62,15 @@ namespace Q2ANotify
             _user = feed.User;
             _notifications.InsertRange(0, feed.Notifications);
 
-            _elementControl.Content = BuildContent();
+            RebuildContent();
+        }
+
+        private void RebuildContent()
+        {
+            if (Visible)
+                _elementControl.Content = BuildContent();
+            else
+                _elementControl.Content = null;
         }
 
         protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
@@ -117,7 +134,7 @@ namespace Q2ANotify
 
             _notifications.RemoveAll(p => p.Id == id);
 
-            _elementControl.Content = BuildContent();
+            RebuildContent();
         }
 
         private void DismissAll()
@@ -130,7 +147,16 @@ namespace Q2ANotify
 
             _notifications.Clear();
 
-            _elementControl.Content = BuildContent();
+            RebuildContent();
+        }
+
+        private void NotificationsForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                Visible = false;
+            }
         }
     }
 }

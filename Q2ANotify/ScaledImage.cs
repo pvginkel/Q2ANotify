@@ -12,7 +12,7 @@ namespace Q2ANotify
     {
         private readonly Bitmap _bitmap;
         private readonly Size _size;
-        private readonly Dictionary<(float DpiX, float DpiY), Bitmap> _cache = new Dictionary<(float DpiX, float DpiY), Bitmap>();
+        private readonly Dictionary<int, Bitmap> _cache = new Dictionary<int, Bitmap>();
 
         public ScaledImage(Bitmap bitmap, Size size)
         {
@@ -23,13 +23,13 @@ namespace Q2ANotify
             _size = size;
         }
 
-        public Bitmap GetScaled(float dpiX, float dpiY)
+        public Bitmap GetScaled(int dpi)
         {
-            if (!_cache.TryGetValue((dpiX, dpiY), out var bitmap))
+            if (!_cache.TryGetValue(dpi, out var bitmap))
             {
                 var targetSize = new Size(
-                    (int)((dpiX / 96) * _size.Width),
-                    (int)((dpiY / 96) * _size.Height)
+                    _size.Width * dpi / 96,
+                    _size.Height * dpi / 96
                 );
 
                 bitmap = new Bitmap(targetSize.Width, targetSize.Height);
@@ -48,7 +48,7 @@ namespace Q2ANotify
                     );
                 }
 
-                _cache.Add((dpiX, dpiY), bitmap);
+                _cache.Add(dpi, bitmap);
             }
 
             return bitmap;
